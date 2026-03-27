@@ -1,0 +1,317 @@
+#!/usr/bin/env bash
+# tmux-learn - Interactive Tmux Tutorial
+# Main launcher script
+
+set -euo pipefail
+
+# Resolve the script directory (follow symlinks)
+resolve_dir() {
+    local source="${BASH_SOURCE[0]}"
+    while [[ -L "$source" ]]; do
+        local dir
+        dir=$(cd -P "$(dirname "$source")" && pwd)
+        source=$(readlink "$source")
+        [[ "$source" != /* ]] && source="$dir/$source"
+    done
+    cd -P "$(dirname "$source")" && pwd
+}
+
+TMUX_LEARN_DIR=$(resolve_dir)
+export TMUX_LEARN_DIR
+
+# Source all libraries
+source "$TMUX_LEARN_DIR/lib/ui.sh"
+source "$TMUX_LEARN_DIR/lib/progress.sh"
+source "$TMUX_LEARN_DIR/lib/tmux_helpers.sh"
+source "$TMUX_LEARN_DIR/lib/verify.sh"
+source "$TMUX_LEARN_DIR/lib/engine.sh"
+source "$TMUX_LEARN_DIR/exercises/sandbox.sh"
+
+# Module definitions
+declare -A MODULE_NAMES=(
+    ["01-basics"]="Basics"
+    ["02-navigation"]="Navigation"
+    ["03-customization"]="Customization"
+    ["04-scripting"]="Scripting"
+    ["05-advanced"]="Advanced"
+)
+
+declare -A MODULE_DESCRIPTIONS=(
+    ["01-basics"]="Sessions, windows, panes, and basic navigation"
+    ["02-navigation"]="Advanced movement, copy mode, and searching"
+    ["03-customization"]="Configure tmux with .tmux.conf"
+    ["04-scripting"]="Automate tmux with shell scripts"
+    ["05-advanced"]="Hooks, plugins, pair programming, workflows"
+)
+
+# Ordered module list
+MODULE_ORDER=("01-basics" "02-navigation" "03-customization" "04-scripting" "05-advanced")
+
+# Check prerequisites
+check_prerequisites() {
+    # Check bash version
+    if ((BASH_VERSINFO[0] < 4)); then
+        printf "\033[31mError: bash 4.0+ required (found %s)\033[0m\n" "$BASH_VERSION"
+        exit 1
+    fi
+
+    # Check tmux
+    if ! tmux_check_installed; then
+        printf "\033[31mError: tmux is not installed\033[0m\n"
+        printf "\nInstall tmux:\n"
+        printf "  macOS:  brew install tmux\n"
+        printf "  Ubuntu: sudo apt install tmux\n"
+        printf "  Fedora: sudo dnf install tmux\n"
+        exit 1
+    fi
+
+    if ! tmux_check_version; then
+        printf "\033[33mWarning: tmux %s detected. Version %s+ recommended.\033[0m\n" "$TMUX_VERSION" "$TMUX_MIN_VERSION"
+        printf "Some features may not work correctly.\n"
+        sleep 2
+    fi
+}
+
+# Bootstrap into tmux if not already inside
+bootstrap_tmux() {
+    if [[ -z "${TMUX:-}" ]]; then
+        # Not inside tmux - create a session and re-launch
+        exec tmux new-session -s "tmux-learn" "$0" "$@"
+    fi
+}
+
+# Check if a module is unlocked
+module_is_unlocked() {
+    local module="$1"
+
+    # First module is always unlocked
+    if [[ "$module" == "01-basics" ]]; then
+        return 0
+    fi
+
+    # Find the previous module
+    local prev_module=""
+    for m in "${MODULE_ORDER[@]}"; do
+        if [[ "$m" == "$module" ]]; then
+            break
+        fi
+        prev_module="$m"
+    done
+
+    if [[ -z "$prev_module" ]]; then
+        return 0
+    fi
+
+    # Check if previous module is 80% complete
+    local prev_dir="$TMUX_LEARN_DIR/lessons/$prev_module"
+    local prev_total prev_completed
+    prev_total=$(progress_module_total "$prev_dir")
+    prev_completed=$(progress_module_count "$prev_module")
+
+    if ((prev_total == 0)); then
+        return 0
+    fi
+
+    local threshold=$(( prev_total * 80 / 100 ))
+    ((threshold < 1)) && threshold=1
+
+    ((prev_completed >= threshold))
+}
+
+# Get lesson title from a lesson file
+get_lesson_title() {
+    local lesson_file="$1"
+    # Source the lesson in a subshell to get title
+    (
+        LESSON_TITLE=""
+        source "$lesson_file"
+        lesson_info
+        echo "$LESSON_TITLE"
+    )
+}
+
+# Show module menu (list lessons in a module)
+show_module_menu() {
+    local module="$1"
+    local module_dir="$TMUX_LEARN_DIR/lessons/$module"
+
+    while true; do
+        ui_clear
+        ui_header "${MODULE_NAMES[$module]}"
+        ui_info "${MODULE_DESCRIPTIONS[$module]}"
+        ui_separator
+        echo ""
+
+        local lessons=()
+        local lesson_ids=()
+        local lesson_files=()
+
+        for lesson_file in "$module_dir"/*.sh; do
+            [[ -f "$lesson_file" ]] || continue
+            local lesson_name
+            lesson_name=$(basename "$lesson_file" .sh)
+            local lesson_id="${module}/${lesson_name}"
+            local title
+            title=$(get_lesson_title "$lesson_file")
+            local status
+            status=$(progress_get_status "$lesson_id")
+
+            local status_icon
+            case "$status" in
+                complete)    status_icon="${C_GREEN}${CHECKMARK}${C_RESET}" ;;
+                in-progress) status_icon="${C_YELLOW}${ARROW}${C_RESET}" ;;
+                *)           status_icon="${C_DIM}${BULLET}${C_RESET}" ;;
+            esac
+
+            lessons+=("$(printf "%b %s" "$status_icon" "$title")")
+            lesson_ids+=("$lesson_id")
+            lesson_files+=("$lesson_file")
+        done
+
+        lessons+=("${C_DIM}Back to main menu${C_RESET}")
+
+        ui_menu "" "${lessons[@]}"
+        local choice=$MENU_CHOICE
+
+        if ((choice == -1 || choice == ${#lesson_files[@]})); then
+            return
+        fi
+
+        if ((choice >= 0 && choice < ${#lesson_files[@]})); then
+            engine_run_lesson "${lesson_files[$choice]}" "${lesson_ids[$choice]}"
+        fi
+    done
+}
+
+# Continue from last position
+continue_lesson() {
+    local next
+    next=$(progress_get_next "$TMUX_LEARN_DIR/lessons")
+
+    if [[ -z "$next" ]]; then
+        ui_success "All lessons completed! You're a tmux master!"
+        ui_press_enter
+        return
+    fi
+
+    local module="${next%/*}"
+    local lesson="${next#*/}"
+    local lesson_file="$TMUX_LEARN_DIR/lessons/$module/${lesson}.sh"
+
+    if [[ ! -f "$lesson_file" ]]; then
+        ui_error "Lesson file not found: $lesson_file"
+        ui_press_enter
+        return
+    fi
+
+    if ! module_is_unlocked "$module"; then
+        ui_warn "Next lesson is in a locked module. Complete more of the previous module first."
+        ui_press_enter
+        return
+    fi
+
+    engine_run_lesson "$lesson_file" "$next"
+}
+
+# Main menu
+show_main_menu() {
+    while true; do
+        ui_clear
+        ui_logo
+
+        # Show progress
+        local stats completed total
+        stats=$(progress_get_stats "$TMUX_LEARN_DIR/lessons")
+        completed=$(echo "$stats" | cut -d' ' -f1)
+        total=$(echo "$stats" | cut -d' ' -f2)
+
+        printf "  ${C_BOLD}Progress:${C_RESET} %d/%d lessons complete\n" "$completed" "$total"
+        ui_progress_bar "$completed" "$total"
+        echo ""
+        ui_separator
+
+        # Build module list
+        local menu_items=()
+        local module_indices=()
+
+        for module in "${MODULE_ORDER[@]}"; do
+            local module_dir="$TMUX_LEARN_DIR/lessons/$module"
+            local mod_total mod_completed
+            mod_total=$(progress_module_total "$module_dir")
+            mod_completed=$(progress_module_count "$module")
+
+            local name="${MODULE_NAMES[$module]}"
+            local desc="${MODULE_DESCRIPTIONS[$module]}"
+
+            if module_is_unlocked "$module"; then
+                local status_line
+                if ((mod_completed == mod_total && mod_total > 0)); then
+                    status_line="${C_GREEN}${CHECKMARK} ${C_BOLD}${name}${C_RESET}  ${C_DIM}(${mod_completed}/${mod_total})${C_RESET}  ${C_DIM}${desc}${C_RESET}"
+                else
+                    status_line="${BOOK} ${C_BOLD}${name}${C_RESET}  ${C_DIM}(${mod_completed}/${mod_total})${C_RESET}  ${C_DIM}${desc}${C_RESET}"
+                fi
+            else
+                status_line="${LOCK} ${C_DIM}${name}  (locked - complete previous module)${C_RESET}"
+            fi
+
+            menu_items+=("$(printf '%b' "$status_line")")
+            module_indices+=("$module")
+        done
+
+        menu_items+=("$(printf '%b' "${C_CYAN}Continue from last position${C_RESET}")")
+        menu_items+=("$(printf '%b' "${C_YELLOW}Reset progress${C_RESET}")")
+        menu_items+=("$(printf '%b' "${C_DIM}Quit${C_RESET}")")
+
+        ui_menu "" "${menu_items[@]}"
+        local choice=$MENU_CHOICE
+
+        # Handle quit from menu
+        if ((choice == -1)); then
+            break
+        fi
+
+        local num_modules=${#MODULE_ORDER[@]}
+
+        if ((choice >= 0 && choice < num_modules)); then
+            local selected_module="${module_indices[$choice]}"
+            if module_is_unlocked "$selected_module"; then
+                show_module_menu "$selected_module"
+            else
+                ui_warn "This module is locked. Complete the previous module first."
+                ui_press_enter
+            fi
+        elif ((choice == num_modules)); then
+            # Continue
+            continue_lesson
+        elif ((choice == num_modules + 1)); then
+            # Reset
+            if ui_confirm "Reset all progress? This cannot be undone."; then
+                progress_reset
+                ui_success "Progress reset."
+                sleep 1
+            fi
+        elif ((choice == num_modules + 2)); then
+            # Quit
+            break
+        fi
+    done
+}
+
+# Cleanup on exit
+cleanup() {
+    sandbox_destroy 2>/dev/null || true
+}
+trap cleanup EXIT
+
+# Main entry point
+main() {
+    check_prerequisites
+    bootstrap_tmux "$@"
+    progress_init
+    show_main_menu
+
+    ui_clear
+    printf "\n  ${C_CYAN}Thanks for using tmux-learn! Happy tmuxing!${C_RESET}\n\n"
+}
+
+main "$@"
