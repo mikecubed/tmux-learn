@@ -7,7 +7,7 @@ TUTORIAL_SESSION="tmux-learn"
 # Create a fresh sandbox session
 sandbox_create() {
     # Kill existing sandbox if any
-    tmux kill-session -t "$SANDBOX_SESSION" 2>/dev/null
+    tmux kill-session -t "$SANDBOX_SESSION" 2>/dev/null || true
 
     # Create new sandbox session (detached)
     tmux new-session -d -s "$SANDBOX_SESSION"
@@ -15,7 +15,7 @@ sandbox_create() {
 
 # Destroy the sandbox session
 sandbox_destroy() {
-    tmux kill-session -t "$SANDBOX_SESSION" 2>/dev/null
+    tmux kill-session -t "$SANDBOX_SESSION" 2>/dev/null || true
 }
 
 # Switch user to sandbox session
@@ -40,7 +40,7 @@ sandbox_create_split() {
 # Close the sandbox split pane
 sandbox_close_split() {
     local pane_id="$1"
-    tmux kill-pane -t "$pane_id" 2>/dev/null
+    tmux kill-pane -t "$pane_id" 2>/dev/null || true
 }
 
 # Reset sandbox to clean state (kill all windows/panes, back to single window)

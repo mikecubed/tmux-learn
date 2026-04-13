@@ -58,6 +58,8 @@ engine_run_lesson() {
         ENGINE_SANDBOX_PANE=""
     fi
 
+    engine_pause
+
     # Completion message
     ui_clear
     ui_header "Lesson Complete!"
@@ -129,7 +131,7 @@ engine_exercise() {
     local hint="${5:-}"
     local use_sandbox="${6:-session}"
 
-    ((ENGINE_EXERCISE_COUNT++))
+    (( ++ENGINE_EXERCISE_COUNT ))
 
     ui_clear
     ui_exercise_box "$title" "$instructions"
@@ -183,7 +185,7 @@ engine_exercise() {
                     fi
                     return 0
                 else
-                    ((attempts++))
+                    (( ++attempts ))
                     echo ""
                     ui_error "$VERIFY_MESSAGE"
                     if ((attempts >= max_attempts_for_hint)) && [[ -n "$VERIFY_HINT" || -n "$hint" ]]; then

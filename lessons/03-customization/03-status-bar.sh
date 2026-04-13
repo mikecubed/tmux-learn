@@ -20,7 +20,7 @@ lesson_run() {
 
     ┌─────────────────────────────────────────────────────┐
     │ LEFT          CENTER (windows)              RIGHT   │
-    │ [session]   0:bash  1:vim* 2:logs          12:34 PM│
+    │ [session]   0:bash  1:vim* 2:logs          12:34 PM │
     └─────────────────────────────────────────────────────┘
 
 DIAGRAM
@@ -75,7 +75,7 @@ DIAGRAM
     printf "  ${C_WHITE}set -g status-left '#[fg=green,bold][#S] '${C_RESET}\n"
     echo ""
     printf "  ${C_WHITE}set -g status-right-length 60${C_RESET}\n"
-    printf "  ${C_WHITE}set -g status-right '#[fg=yellow]%H:%M #[fg=cyan]%d-%b-%Y'${C_RESET}\n"
+    printf "  ${C_WHITE}set -g status-right '#[fg=yellow]%%H:%%M #[fg=cyan]%%d-%%b-%%Y'${C_RESET}\n"
     echo ""
 
     engine_pause
@@ -123,7 +123,7 @@ cyan, white, default, colour0-colour255, or hex #rrggbb"
     printf "  ${C_GREEN}# Left: session name${C_RESET}\n"
     printf "  ${C_WHITE}set -g status-left '#[fg=colour46,bold] #S '${C_RESET}\n\n"
     printf "  ${C_GREEN}# Right: user@host and time${C_RESET}\n"
-    printf "  ${C_WHITE}set -g status-right '#[fg=colour75]#(whoami)@#H #[fg=colour226]%H:%M '${C_RESET}\n\n"
+    printf "  ${C_WHITE}set -g status-right '#[fg=colour75]#(whoami)@#H #[fg=colour226]%%H:%%M '${C_RESET}\n\n"
     printf "  ${C_GREEN}# Active window${C_RESET}\n"
     printf "  ${C_WHITE}setw -g window-status-current-style fg=colour46,bg=colour238,bold${C_RESET}\n"
     echo ""

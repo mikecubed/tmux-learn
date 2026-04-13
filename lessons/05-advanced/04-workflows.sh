@@ -244,7 +244,7 @@ Ctrl+b to the inner tmux session."
                ) (
              _.' '._
             '-------'
-         TMUX MASTER!
+          TMUX MASTER!
 
 TROPHY
     printf "${C_RESET}"

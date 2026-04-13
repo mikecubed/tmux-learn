@@ -258,9 +258,9 @@ show_main_menu() {
             module_indices+=("$module")
         done
 
-        menu_items+=("$(printf '%b' "${C_CYAN}Continue from last position${C_RESET}")")
-        menu_items+=("$(printf '%b' "${C_YELLOW}Reset progress${C_RESET}")")
-        menu_items+=("$(printf '%b' "${C_DIM}Quit${C_RESET}")")
+        menu_items+=("${C_CYAN}Continue from last position${C_RESET}")
+        menu_items+=("${C_YELLOW}Reset progress${C_RESET}")
+        menu_items+=("${C_DIM}Quit${C_RESET}")
 
         ui_menu "" "${menu_items[@]}"
         local choice=$MENU_CHOICE

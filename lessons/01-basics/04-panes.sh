@@ -121,6 +121,7 @@ when a pane is zoomed."
     engine_pause
 
     # ── Exercise 1 ──
+    sandbox_create
     engine_exercise \
         "panes-1" \
         "Create a 4-Pane Layout" \
@@ -140,7 +141,7 @@ Like this:
 Switch to sandbox with Prefix + s" \
         verify_exercise_1 \
         "In sandbox: Prefix+% (split vertical), then select left pane and Prefix+\" (split horizontal), then select right top pane and Prefix+\"" \
-        "session"
+        "current"
 
     # ── Exercise 2 ──
     engine_exercise \
@@ -153,7 +154,9 @@ Use Prefix + Space to cycle layouts,
 or run: tmux select-layout -t tmux-learn-sandbox tiled" \
         verify_exercise_2 \
         "Run: tmux select-layout -t tmux-learn-sandbox tiled" \
-        "none"
+        "current"
+
+    sandbox_destroy
 
     engine_teach "Fantastic! Panes are one of tmux's most powerful features. With
 practice, you'll instinctively split and arrange panes to match

@@ -57,7 +57,9 @@ progress_get_status() {
 # Count completed lessons in a module
 progress_module_count() {
     local module="$1"
-    grep -c "^${module}/.*=complete:" "$PROGRESS_FILE" 2>/dev/null || echo 0
+    local count
+    count=$(grep -c "^${module}/.*=complete:" "$PROGRESS_FILE" 2>/dev/null) || true
+    echo "${count:-0}"
 }
 
 # Get total lesson count for a module
@@ -65,7 +67,7 @@ progress_module_total() {
     local module_dir="$1"
     local count=0
     if [[ -d "$module_dir" ]]; then
-        count=$(find "$module_dir" -maxdepth 1 -name '*.sh' | wc -l)
+        count=$(find "$module_dir" -maxdepth 1 -name '*.sh' | wc -l | tr -d ' ')
     fi
     echo "$count"
 }
@@ -109,12 +111,12 @@ progress_get_stats() {
 
         for lesson_file in "$module_dir"*.sh; do
             [[ -f "$lesson_file" ]] || continue
-            ((total++))
+            (( ++total ))
             local lesson_name
             lesson_name=$(basename "$lesson_file" .sh)
             local lesson_id="${module_name}/${lesson_name}"
             if progress_is_complete "$lesson_id"; then
-                ((completed++))
+                (( ++completed ))
             fi
         done
     done

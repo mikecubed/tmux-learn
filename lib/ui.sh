@@ -2,22 +2,22 @@
 # ui.sh - Terminal UI helpers using ANSI escape codes
 
 # Colors
-readonly C_RESET='\033[0m'
-readonly C_BOLD='\033[1m'
-readonly C_DIM='\033[2m'
-readonly C_ITALIC='\033[3m'
-readonly C_UNDERLINE='\033[4m'
-readonly C_RED='\033[31m'
-readonly C_GREEN='\033[32m'
-readonly C_YELLOW='\033[33m'
-readonly C_BLUE='\033[34m'
-readonly C_MAGENTA='\033[35m'
-readonly C_CYAN='\033[36m'
-readonly C_WHITE='\033[37m'
-readonly C_BG_BLUE='\033[44m'
-readonly C_BG_GREEN='\033[42m'
-readonly C_BG_RED='\033[41m'
-readonly C_BG_YELLOW='\033[43m'
+readonly C_RESET=$'\033[0m'
+readonly C_BOLD=$'\033[1m'
+readonly C_DIM=$'\033[2m'
+readonly C_ITALIC=$'\033[3m'
+readonly C_UNDERLINE=$'\033[4m'
+readonly C_RED=$'\033[31m'
+readonly C_GREEN=$'\033[32m'
+readonly C_YELLOW=$'\033[33m'
+readonly C_BLUE=$'\033[34m'
+readonly C_MAGENTA=$'\033[35m'
+readonly C_CYAN=$'\033[36m'
+readonly C_WHITE=$'\033[37m'
+readonly C_BG_BLUE=$'\033[44m'
+readonly C_BG_GREEN=$'\033[42m'
+readonly C_BG_RED=$'\033[41m'
+readonly C_BG_YELLOW=$'\033[43m'
 
 # Unicode box-drawing characters
 readonly BOX_TL='╔' BOX_TR='╗' BOX_BL='╚' BOX_BR='╝'
@@ -218,19 +218,19 @@ ui_progress_bar() {
 ui_typewriter() {
     local text="$1" delay="${2:-0.02}"
 
-    # Set nonblocking input
-    if command -v stty &>/dev/null; then
-        local old_settings
-        old_settings=$(stty -g 2>/dev/null)
-        stty -echo -icanon min 0 time 0 2>/dev/null
+    # Set nonblocking input (only when stdin is a terminal)
+    local old_settings=""
+    if [[ -t 0 ]] && command -v stty &>/dev/null; then
+        old_settings=$(stty -g 2>/dev/null) || true
+        stty -echo -icanon min 0 time 0 2>/dev/null || true
     fi
 
     local i char skip=0
     for ((i = 0; i < ${#text}; i++)); do
         char="${text:$i:1}"
 
-        # Check for keypress to skip
-        if [[ $skip -eq 0 ]]; then
+        # Check for keypress to skip (only when stdin is a terminal)
+        if [[ $skip -eq 0 && -t 0 ]]; then
             local key
             key=$(dd bs=1 count=1 2>/dev/null) || true
             if [[ -n "$key" ]]; then
@@ -249,8 +249,8 @@ ui_typewriter() {
     printf '\n'
 
     # Restore terminal
-    if [[ -n "${old_settings:-}" ]]; then
-        stty "$old_settings" 2>/dev/null
+    if [[ -n "$old_settings" ]]; then
+        stty "$old_settings" 2>/dev/null || true
     fi
 }
 
@@ -327,7 +327,7 @@ ui_logo() {
     printf "${C_CYAN}${C_BOLD}"
     cat << 'LOGO'
 
-     _                           _
+     _                          _
     | |_ _ __ ___  _   ___  __ | | ___  __ _ _ __ _ __
     | __| '_ ` _ \| | | \ \/ / | |/ _ \/ _` | '__| '_ \
     | |_| | | | | | |_| |>  <  | |  __/ (_| | |  | | | |
