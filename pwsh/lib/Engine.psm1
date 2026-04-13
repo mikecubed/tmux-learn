@@ -141,7 +141,7 @@ function Engine-Exercise {
     switch ($UseSandbox) {
         "session" {
             Sandbox-Create
-            UI-Info "A sandbox session '$script:SANDBOX_SESSION' has been created for you."
+            UI-Info "A sandbox session '$(Get-SandboxSession)' has been created for you."
             UI-Info "Switch to it with: Prefix + ( or Prefix + s to see session list"
         }
         "split" {

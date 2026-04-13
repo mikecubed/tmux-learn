@@ -88,7 +88,7 @@ function Lesson-Run {
         -Title "Create and Rearrange Panes" `
         -Instructions "In the sandbox session 'tmux-learn-sandbox':`n`n1. Create 3 panes (split the window twice)`n2. The window should have at least 3 panes`n`nSwitch to sandbox with Prefix + s" `
         -VerifyFunc {
-            Verify-PaneCount $SANDBOX_SESSION 3
+            Verify-PaneCount (Get-SandboxSession) 3
         } `
         -Hint "In sandbox: Prefix+% then Prefix+`" to get 3 panes" `
         -UseSandbox "session"

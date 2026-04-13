@@ -80,7 +80,7 @@ function Lesson-Run {
         -Instructions "In the sandbox session 'tmux-learn-sandbox':`n`n1. Create 3 windows total`n2. Name them: 'editor', 'server', 'logs'`n`nUse Prefix + c to create, Prefix + , to rename.`n`nSwitch to sandbox with Prefix + s" `
         -VerifyFunc {
             Verify-Reset
-            $names = @(tmux list-windows -t $SANDBOX_SESSION -F '#{window_name}' 2>$null)
+            $names = @(tmux list-windows -t (Get-SandboxSession) -F '#{window_name}' 2>$null)
 
             $hasEditor = ($names -contains "editor")
             $hasServer = ($names -contains "server")

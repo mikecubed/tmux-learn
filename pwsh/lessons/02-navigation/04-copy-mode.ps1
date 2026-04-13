@@ -142,9 +142,9 @@ function Lesson-Run {
 
     # Set up some content in the sandbox
     Sandbox-Create
-    tmux send-keys -t $SANDBOX_SESSION "echo 'TMUX-LEARN-COPY-TEST: The quick brown fox jumps over the lazy dog'" Enter
+    tmux send-keys -t (Get-SandboxSession) "echo 'TMUX-LEARN-COPY-TEST: The quick brown fox jumps over the lazy dog'" Enter
     Start-Sleep -Milliseconds 500
-    tmux send-keys -t $SANDBOX_SESSION "echo 'Copy the word TMUX-LEARN-COPY-TEST from the line above'" Enter
+    tmux send-keys -t (Get-SandboxSession) "echo 'Copy the word TMUX-LEARN-COPY-TEST from the line above'" Enter
 
     Engine-Exercise -ExerciseId "copy-mode-1" `
         -Title "Copy Text in Copy Mode" `

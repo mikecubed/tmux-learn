@@ -142,7 +142,7 @@ Like this:
 
 Switch to sandbox with Prefix + s
 "@ `
-        -VerifyFunc { Verify-PaneCount $SANDBOX_SESSION 4 } `
+        -VerifyFunc { Verify-PaneCount (Get-SandboxSession) 4 } `
         -Hint 'In sandbox: Prefix+% (split vertical), then select left pane and Prefix+" (split horizontal), then select right top pane and Prefix+"' `
         -UseSandbox "session"
 
@@ -159,7 +159,7 @@ or run: tmux select-layout -t tmux-learn-sandbox tiled
 "@ `
         -VerifyFunc {
             Verify-Reset
-            $count = @(tmux list-panes -t $SANDBOX_SESSION 2>$null).Count
+            $count = @(tmux list-panes -t (Get-SandboxSession) 2>$null).Count
 
             if ($count -ge 4) {
                 Set-VerifyMessage "Found $count panes with layout applied"

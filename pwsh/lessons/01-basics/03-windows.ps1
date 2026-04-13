@@ -113,7 +113,7 @@ create new windows.
 
 Switch back here with Prefix + s when done.
 "@ `
-        -VerifyFunc { Verify-WindowCount $SANDBOX_SESSION 3 } `
+        -VerifyFunc { Verify-WindowCount (Get-SandboxSession) 3 } `
         -Hint "Switch to sandbox (Prefix+s), then press Prefix+c twice to create 2 more windows (3 total)" `
         -UseSandbox "session"
 
@@ -130,7 +130,7 @@ press Prefix + , and type 'editor'.
 
 Switch back here with Prefix + s when done.
 "@ `
-        -VerifyFunc { Verify-WindowNameExists $SANDBOX_SESSION "editor" } `
+        -VerifyFunc { Verify-WindowNameExists (Get-SandboxSession) "editor" } `
         -Hint "In the sandbox: Press Prefix + , then type 'editor' and press Enter" `
         -UseSandbox "session"
 

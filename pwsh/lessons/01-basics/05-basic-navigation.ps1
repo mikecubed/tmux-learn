@@ -114,7 +114,7 @@ then switch back here to check.
             Verify-Reset
 
             # Check window count
-            $winCount = @(tmux list-windows -t $SANDBOX_SESSION 2>$null).Count
+            $winCount = @(tmux list-windows -t (Get-SandboxSession) 2>$null).Count
 
             if ($winCount -lt 2) {
                 Set-VerifyMessage "Need at least 2 windows (found $winCount)"
@@ -125,7 +125,7 @@ then switch back here to check.
             # Check for window named 'code'
             $hasCode = $false
             $codeWindow = ""
-            $windowList = tmux list-windows -t $SANDBOX_SESSION -F '#{window_name}:#{window_index}' 2>$null
+            $windowList = tmux list-windows -t (Get-SandboxSession) -F '#{window_name}:#{window_index}' 2>$null
             foreach ($entry in $windowList) {
                 $parts = $entry -split ':'
                 if ($parts[0] -eq "code") {
